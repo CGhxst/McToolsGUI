@@ -1,12 +1,12 @@
 # McTools GUI
 
-Utilities to decrypt Marketplace Contents
+Utilities to decrypt contents
 
 ## About
 This project is a GUI-based version of the original [McTools](https://silica.codes/BedrockReverse/McTools) program.
 
 ## Features
-- Decrypt Marketplace content packs.
+- Decrypt content packs.
 - Encrypt content packs with custom or auto-generated keys.
 
 ## Requirements
@@ -17,7 +17,7 @@ This project is a GUI-based version of the original [McTools](https://silica.cod
 1. Clone the repository.
 2. Open the solution in Visual Studio.
 3. Build and run the project.
-4. Use the GUI to decrypt or encrypt Marketplace content packs.
+4. Use the GUI to decrypt or encrypt content packs.
 
 ## Credits
 Based on the original [McTools](https://silica.codes/BedrockReverse/McTools) program.
