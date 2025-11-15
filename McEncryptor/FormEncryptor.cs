@@ -26,6 +26,10 @@ namespace McEncryptor
             Text = "McEncryptor";
             Width = 700;
             Height = 500;
+            FormBorderStyle = FormBorderStyle.Sizable; // allow resize
+            MaximizeBox = true;
+            MaximumSize = new System.Drawing.Size(700, 500); // cap
+            MinimumSize = new System.Drawing.Size(600, 420); // allow some shrink
 
             lblPackPath = new Label { Text = "Pack Folder:", Left = 10, Top = 15, Width = 90 };
             txtPackPath = new TextBox { Left = 110, Top = 12, Width = 420 };
@@ -60,7 +64,7 @@ namespace McEncryptor
             btnBrowse.Click += (s, e) => BrowseFolder();
             btnGenerateKey.Click += (s, e) => GenerateKey();
             btnEncrypt.Click += (s, e) => EncryptPack();
-            txtPackPath.Leave += (s, e) => LoadPackInfo();
+            // Removed txtPackPath.Leave auto-load to prevent premature validation
         }
 
         private void Log(string message)
@@ -80,6 +84,11 @@ namespace McEncryptor
         private void LoadPackInfo()
         {
             string path = txtPackPath.Text.Trim();
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                // Do not log anything for empty path
+                return;
+            }
             if (!Directory.Exists(path))
             {
                 Log("Folder does not exist.");

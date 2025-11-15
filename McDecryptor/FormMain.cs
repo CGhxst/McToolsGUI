@@ -29,12 +29,17 @@ namespace McDecryptor
         private ImageList imgList; // holds icons
         private Dictionary<string, int> iconIndexByPath; // cache path->image index
         private int fallbackIndex = 0;
+        private Dictionary<string, int> typeFallbackIndices = new Dictionary<string, int>(StringComparer.InvariantCultureIgnoreCase);
 
         public FormMain()
         {
             Text = "McDecryptor";
             Width = 1000;
             Height = 600;
+            FormBorderStyle = FormBorderStyle.Sizable; // allow resize
+            MaximizeBox = true; // keep maximize button behavior constrained by MaximumSize
+            MaximumSize = new Size(1000, 600); // cap enlargement
+            MinimumSize = new Size(800, 500); // allow shrinking but keep usability
 
             // Initialize image list
             imgList = new ImageList();
@@ -42,6 +47,7 @@ namespace McDecryptor
             imgList.ImageSize = new Size(32, 32);
             iconIndexByPath = new Dictionary<string, int>(StringComparer.InvariantCultureIgnoreCase);
             AddFallbackImage();
+            AddTypeFallbackImages();
 
             // Pack list
             listPacks = new ListView
@@ -134,21 +140,59 @@ namespace McDecryptor
                 fallbackIndex = 0;
             }
         }
+        private void AddTypeFallbackImages()
+        {
+            // Define colors per product type
+            var mapping = new Dictionary<string, Color>(StringComparer.InvariantCultureIgnoreCase)
+            {
+                {"resource_packs", Color.SteelBlue},
+                {"skin_packs", Color.DeepPink},
+                {"world_templates", Color.ForestGreen},
+                {"persona", Color.MediumPurple},
+                {"behavior_packs", Color.DarkOrange},
+                {"behaviour_packs", Color.DarkOrange}, // spelling variant
+                {"minecraftWorlds", Color.SaddleBrown},
+                {"addon", Color.Teal}
+            };
+            foreach (var kv in mapping)
+            {
+                if (typeFallbackIndices.ContainsKey(kv.Key)) continue;
+                Bitmap bmp = new Bitmap(32, 32);
+                using (Graphics g = Graphics.FromImage(bmp))
+                {
+                    g.Clear(kv.Value);
+                    g.DrawRectangle(Pens.Black, 0, 0, 31, 31);
+                    // optional letter overlay
+                    string letter = kv.Key.Substring(0, 1).ToUpperInvariant();
+                    using (Font f = new Font(FontFamily.GenericSansSerif, 12, FontStyle.Bold))
+                    using (Brush b = new SolidBrush(Color.White))
+                    {
+                        var sz = g.MeasureString(letter, f);
+                        g.DrawString(letter, f, b, (32 - sz.Width)/2, (32 - sz.Height)/2);
+                    }
+                }
+                imgList.Images.Add(bmp);
+                typeFallbackIndices[kv.Key] = imgList.Images.Count - 1;
+            }
+        }
 
         private int GetIconIndex(PEntry entry)
         {
             string packIconPath = Path.Combine(entry.FilePath, "pack_icon.png");
-            if (!File.Exists(packIconPath)) return fallbackIndex;
-
+            if (!File.Exists(packIconPath))
+            {
+                // choose type-specific fallback if available
+                if (typeFallbackIndices.TryGetValue(entry.ProductType, out int tIdx))
+                    return tIdx;
+                return fallbackIndex;
+            }
             // Use entry.FilePath as key
             if (iconIndexByPath.TryGetValue(entry.FilePath, out int existing))
                 return existing;
-
             try
             {
                 using (var original = Image.FromFile(packIconPath))
                 {
-                    // scale to 32x32 preserving aspect ratio
                     Bitmap scaled = new Bitmap(32, 32);
                     using (Graphics g = Graphics.FromImage(scaled))
                     {
@@ -171,6 +215,8 @@ namespace McDecryptor
             }
             catch
             {
+                if (typeFallbackIndices.TryGetValue(entry.ProductType, out int tIdx))
+                    return tIdx;
                 return fallbackIndex;
             }
         }
