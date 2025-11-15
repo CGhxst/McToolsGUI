@@ -1,5 +1,6 @@
 using McCrypt;
 using System;
+using System.Drawing;
 using System.IO;
 using System.Text;
 using System.Windows.Forms;
@@ -30,6 +31,13 @@ namespace McEncryptor
             MaximizeBox = true;
             MaximumSize = new System.Drawing.Size(700, 500); // cap
             MinimumSize = new System.Drawing.Size(600, 420); // allow some shrink
+
+            // Set the window (Form) icon to the executable's embedded application icon so the window shows the same illager icon without requiring an external .ico file.
+            try
+            {
+                this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+            }
+            catch { }
 
             lblPackPath = new Label { Text = "Pack Folder:", Left = 10, Top = 15, Width = 90 };
             txtPackPath = new TextBox { Left = 110, Top = 12, Width = 420 };

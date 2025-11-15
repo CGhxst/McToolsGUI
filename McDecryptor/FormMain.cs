@@ -48,6 +48,13 @@ namespace McDecryptor
             MaximumSize = new Size(1000, 600);
             MinimumSize = new Size(800, 500);
 
+            // Set the window (Form) icon to the executable's embedded application icon so it matches the EXE
+            try
+            {
+                this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+            }
+            catch { }
+
             imgList = new ImageList { ColorDepth = ColorDepth.Depth32Bit, ImageSize = new Size(32, 32) };
             imgListLarge = new ImageList { ColorDepth = ColorDepth.Depth32Bit, ImageSize = new Size(64, 64) };
             iconIndexByPath = new Dictionary<string, int>(StringComparer.InvariantCultureIgnoreCase);
