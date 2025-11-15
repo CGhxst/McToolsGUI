@@ -1,0 +1,6 @@
+*.suo
+*/bin/*
+*/obj/*
+.vs/*
+McEncryptor/.vs/*
+McDecryptor/.vs/*

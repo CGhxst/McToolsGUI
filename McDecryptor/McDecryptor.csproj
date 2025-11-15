@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>McDecryptor</AssemblyName>
+    <RootNamespace>McDecryptor</RootNamespace>
+    <ApplicationIcon>illager.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\McCrypt\LibMcCrypt.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="illager.ico" />
+  </ItemGroup>
+</Project>
