@@ -3,8 +3,8 @@ using McCrypt.PackData;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics; // added for Process.Start
-using System.Drawing; // added for images
+using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
@@ -22,17 +22,16 @@ namespace McDecryptor
         private Button btnDecryptAll;
         private CheckBox chkZip;
         private CheckBox chkCrack;
-        private Button btnToggleView; // replaced checkbox with button
-        private Button btnOpenOutput; // new button to open output folder
+        private Button btnToggleView;
+        private Button btnOpenOutput;
         private ProgressBar progress;
         private TextBox txtLog;
         private PEntry[] currentEntries = new PEntry[0];
 
-        // Image handling
-        private ImageList imgList; // small (details view)
-        private ImageList imgListLarge; // large (grid view)
-        private Dictionary<string, int> iconIndexByPath; // small cache
-        private Dictionary<string, int> iconIndexLargeByPath; // large cache
+        private ImageList imgList;
+        private ImageList imgListLarge;
+        private Dictionary<string, int> iconIndexByPath;
+        private Dictionary<string, int> iconIndexLargeByPath;
         private int fallbackIndex = 0;
         private int fallbackLargeIndex = 0;
         private Dictionary<string, int> typeFallbackIndices = new Dictionary<string, int>(StringComparer.InvariantCultureIgnoreCase);
@@ -44,12 +43,11 @@ namespace McDecryptor
             Text = "McDecryptor";
             Width = 1000;
             Height = 600;
-            FormBorderStyle = FormBorderStyle.Sizable; // allow resize
-            MaximizeBox = true; // keep maximize button behavior constrained by MaximumSize
-            MaximumSize = new Size(1000, 600); // cap enlargement
-            MinimumSize = new Size(800, 500); // allow shrinking but keep usability
+            FormBorderStyle = FormBorderStyle.Sizable;
+            MaximizeBox = true;
+            MaximumSize = new Size(1000, 600);
+            MinimumSize = new Size(800, 500);
 
-            // Initialize image lists
             imgList = new ImageList { ColorDepth = ColorDepth.Depth32Bit, ImageSize = new Size(32, 32) };
             imgListLarge = new ImageList { ColorDepth = ColorDepth.Depth32Bit, ImageSize = new Size(64, 64) };
             iconIndexByPath = new Dictionary<string, int>(StringComparer.InvariantCultureIgnoreCase);
@@ -59,7 +57,6 @@ namespace McDecryptor
             AddFallbackImageLarge();
             AddTypeFallbackImagesLarge();
 
-            // Pack list
             listPacks = new ListView
             {
                 View = View.Details,
@@ -75,7 +72,6 @@ namespace McDecryptor
             listPacks.Columns.Add("Name", 400);
             listPacks.Columns.Add("UUID", 250);
 
-            // Control panel
             panelControls = new Panel { Dock = DockStyle.Top, Height = 55 };
 
             btnRefresh = new Button { Text = "Refresh", Left = 10, Top = 10, Width = 80 };
@@ -83,21 +79,12 @@ namespace McDecryptor
             btnDecryptAll = new Button { Text = "Decrypt All", Left = 240, Top = 10, Width = 110 };
             chkZip = new CheckBox { Text = "Zip Packs", Left = 370, Top = 14, AutoSize = true, Checked = Config.ZipPacks };
             chkCrack = new CheckBox { Text = "Crack Packs", Left = 470, Top = 14, AutoSize = true, Checked = Config.CrackPacks };
-            btnToggleView = new Button { Text = "Grid View", Left = 580, Top = 10, Width = 90 }; // new toggle button
-            btnOpenOutput = new Button { Text = "Open Output Folder", Left = 680, Top = 10, Width = 130 }; // updated text
-            // Remove progress from control panel positioning
-            progress = new ProgressBar { Dock = DockStyle.Bottom, Height = 18 }; // dock at bottom below log
+            btnToggleView = new Button { Text = "Grid View", Left = 580, Top = 10, Width = 90 };
+            btnOpenOutput = new Button { Text = "Open Output Folder", Left = 680, Top = 10, Width = 130 };
+            progress = new ProgressBar { Dock = DockStyle.Bottom, Height = 18 };
 
-            panelControls.Controls.Add(btnRefresh);
-            panelControls.Controls.Add(btnDecryptSelected);
-            panelControls.Controls.Add(btnDecryptAll);
-            panelControls.Controls.Add(chkZip);
-            panelControls.Controls.Add(chkCrack);
-            panelControls.Controls.Add(btnToggleView);
-            panelControls.Controls.Add(btnOpenOutput);
-            // panelControls.Controls.Add(progress); // removed
+            panelControls.Controls.AddRange(new Control[] { btnRefresh, btnDecryptSelected, btnDecryptAll, chkZip, chkCrack, btnToggleView, btnOpenOutput });
 
-            // Log box
             txtLog = new TextBox
             {
                 Multiline = true,
@@ -109,7 +96,7 @@ namespace McDecryptor
             Controls.Add(txtLog);
             Controls.Add(panelControls);
             Controls.Add(listPacks);
-            Controls.Add(progress); // added progress here after txtLog
+            Controls.Add(progress);
 
             btnRefresh.Click += (s, e) => LoadEntries();
             btnDecryptSelected.Click += (s, e) => DecryptSelected();
@@ -140,26 +127,15 @@ namespace McDecryptor
                 {
                     int imgIndex = GetIconIndexLarge(entry);
                     long sz = GetDirectorySize(entry.FilePath);
-                    string nameWithSize = entry.Name + " (" + FormatSize(sz) + ")";
-                    var item = new ListViewItem(nameWithSize, imgIndex) { Tag = entry };
+                    var item = new ListViewItem(entry.Name + " (" + FormatSize(sz) + ")", imgIndex) { Tag = entry };
                     listPacks.Items.Add(item);
                 }
             }
             else
             {
                 listPacks.View = View.Details;
-                // ensure columns count >=5 with Size column inserted if missing
-                if (listPacks.Columns.Count == 0)
+                if (listPacks.Columns.Count != 5)
                 {
-                    listPacks.Columns.Add("Type", 120);
-                    listPacks.Columns.Add("Product", 140);
-                    listPacks.Columns.Add("Name", 350);
-                    listPacks.Columns.Add("Size", 90);
-                    listPacks.Columns.Add("UUID", 250);
-                }
-                else if (listPacks.Columns.Count == 4) // previously without Size
-                {
-                    // Recreate columns to include Size
                     listPacks.Columns.Clear();
                     listPacks.Columns.Add("Type", 120);
                     listPacks.Columns.Add("Product", 140);
@@ -171,8 +147,7 @@ namespace McDecryptor
                 {
                     int imgIndex = GetIconIndex(entry);
                     long sz = GetDirectorySize(entry.FilePath);
-                    string sizeStr = FormatSize(sz);
-                    var item = new ListViewItem(new[] { entry.Type, entry.ProductType, entry.Name, sizeStr, entry.Uuid }, imgIndex) { Tag = entry };
+                    var item = new ListViewItem(new[] { entry.Type, entry.ProductType, entry.Name, FormatSize(sz), entry.Uuid }, imgIndex) { Tag = entry };
                     listPacks.Items.Add(item);
                 }
             }
@@ -181,45 +156,35 @@ namespace McDecryptor
 
         private void AddFallbackImage()
         {
-            try
+            Image img;
+            string icoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "illager.ico");
+            if (File.Exists(icoPath))
             {
-                Image fallback;
-                string icoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "illager.ico");
-                if (File.Exists(icoPath))
-                {
-                    using (var icon = new Icon(icoPath, 32, 32)) fallback = icon.ToBitmap();
-                }
-                else
-                {
-                    Bitmap bmp = new Bitmap(32, 32);
-                    using (Graphics g = Graphics.FromImage(bmp)) { g.Clear(Color.DimGray); g.DrawRectangle(Pens.Black, 0, 0, 31, 31); }
-                    fallback = bmp;
-                }
-                imgList.Images.Add(fallback);
-                fallbackIndex = 0;
+                using (var icon = new Icon(icoPath, 32, 32)) img = icon.ToBitmap();
             }
-            catch { Bitmap bmp = new Bitmap(32, 32); imgList.Images.Add(bmp); fallbackIndex = 0; }
+            else
+            {
+                img = new Bitmap(32, 32);
+                using (Graphics g = Graphics.FromImage(img)) { g.Clear(Color.DimGray); g.DrawRectangle(Pens.Black, 0, 0, 31, 31); }
+            }
+            imgList.Images.Add(img);
+            fallbackIndex = 0;
         }
         private void AddFallbackImageLarge()
         {
-            try
+            Image img;
+            string icoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "illager.ico");
+            if (File.Exists(icoPath))
             {
-                Image fallback;
-                string icoPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "illager.ico");
-                if (File.Exists(icoPath))
-                {
-                    using (var icon = new Icon(icoPath, 64, 64)) fallback = icon.ToBitmap();
-                }
-                else
-                {
-                    Bitmap bmp = new Bitmap(64, 64);
-                    using (Graphics g = Graphics.FromImage(bmp)) { g.Clear(Color.DimGray); g.DrawRectangle(Pens.Black, 0, 0, 63, 63); }
-                    fallback = bmp;
-                }
-                imgListLarge.Images.Add(fallback);
-                fallbackLargeIndex = 0;
+                using (var icon = new Icon(icoPath, 64, 64)) img = icon.ToBitmap();
             }
-            catch { Bitmap bmp = new Bitmap(64, 64); imgListLarge.Images.Add(bmp); fallbackLargeIndex = 0; }
+            else
+            {
+                img = new Bitmap(64, 64);
+                using (Graphics g = Graphics.FromImage(img)) { g.Clear(Color.DimGray); g.DrawRectangle(Pens.Black, 0, 0, 63, 63); }
+            }
+            imgListLarge.Images.Add(img);
+            fallbackLargeIndex = 0;
         }
 
         private void AddTypeFallbackImages()
@@ -278,11 +243,7 @@ namespace McDecryptor
         private int GetIconIndex(PEntry entry)
         {
             string packIconPath = Path.Combine(entry.FilePath, "pack_icon.png");
-            if (!File.Exists(packIconPath))
-            {
-                if (typeFallbackIndices.TryGetValue(entry.ProductType, out int tIdx)) return tIdx;
-                return fallbackIndex;
-            }
+            if (!File.Exists(packIconPath)) return typeFallbackIndices.TryGetValue(entry.ProductType, out int t) ? t : fallbackIndex;
             if (iconIndexByPath.TryGetValue(entry.FilePath, out int existing)) return existing;
             try
             {
@@ -293,27 +254,25 @@ namespace McDecryptor
                     {
                         g.Clear(Color.Transparent);
                         g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                        int w = original.Width; int h = original.Height; float scale = Math.Min(32f / w, 32f / h);
-                        int sw = (int)(w * scale); int sh = (int)(h * scale);
-                        int x = (32 - sw) / 2; int y = (32 - sh) / 2;
+                        float scale = Math.Min(32f / original.Width, 32f / original.Height);
+                        int sw = (int)(original.Width * scale);
+                        int sh = (int)(original.Height * scale);
+                        int x = (32 - sw) / 2;
+                        int y = (32 - sh) / 2;
                         g.DrawImage(original, new Rectangle(x, y, sw, sh));
                     }
                     imgList.Images.Add(scaled);
-                    int newIndex = imgList.Images.Count - 1;
-                    iconIndexByPath[entry.FilePath] = newIndex;
-                    return newIndex;
+                    int idx = imgList.Images.Count - 1;
+                    iconIndexByPath[entry.FilePath] = idx;
+                    return idx;
                 }
             }
-            catch { if (typeFallbackIndices.TryGetValue(entry.ProductType, out int tIdx)) return tIdx; return fallbackIndex; }
+            catch { return typeFallbackIndices.TryGetValue(entry.ProductType, out int t) ? t : fallbackIndex; }
         }
         private int GetIconIndexLarge(PEntry entry)
         {
             string packIconPath = Path.Combine(entry.FilePath, "pack_icon.png");
-            if (!File.Exists(packIconPath))
-            {
-                if (typeFallbackLargeIndices.TryGetValue(entry.ProductType, out int tIdx)) return tIdx;
-                return fallbackLargeIndex;
-            }
+            if (!File.Exists(packIconPath)) return typeFallbackLargeIndices.TryGetValue(entry.ProductType, out int t) ? t : fallbackLargeIndex;
             if (iconIndexLargeByPath.TryGetValue(entry.FilePath, out int existing)) return existing;
             try
             {
@@ -324,18 +283,20 @@ namespace McDecryptor
                     {
                         g.Clear(Color.Transparent);
                         g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                        int w = original.Width; int h = original.Height; float scale = Math.Min(64f / w, 64f / h);
-                        int sw = (int)(w * scale); int sh = (int)(h * scale);
-                        int x = (64 - sw) / 2; int y = (64 - sh) / 2;
+                        float scale = Math.Min(64f / original.Width, 64f / original.Height);
+                        int sw = (int)(original.Width * scale);
+                        int sh = (int)(original.Height * scale);
+                        int x = (64 - sw) / 2;
+                        int y = (64 - sh) / 2;
                         g.DrawImage(original, new Rectangle(x, y, sw, sh));
                     }
                     imgListLarge.Images.Add(scaled);
-                    int newIndex = imgListLarge.Images.Count - 1;
-                    iconIndexLargeByPath[entry.FilePath] = newIndex;
-                    return newIndex;
+                    int idx = imgListLarge.Images.Count - 1;
+                    iconIndexLargeByPath[entry.FilePath] = idx;
+                    return idx;
                 }
             }
-            catch { if (typeFallbackLargeIndices.TryGetValue(entry.ProductType, out int tIdx)) return tIdx; return fallbackLargeIndex; }
+            catch { return typeFallbackLargeIndices.TryGetValue(entry.ProductType, out int t) ? t : fallbackLargeIndex; }
         }
 
         private void Log(string line)
@@ -367,20 +328,13 @@ namespace McDecryptor
                 {
                     Log("Reading options.txt: " + optionsTxt);
                     McCrypt.Keys.ReadOptionsTxt(optionsTxt);
-                    string[] entFiles = Directory.GetFiles(Config.MinecraftFolder, "*.ent", SearchOption.TopDirectoryOnly);
-                    foreach (string entFile in entFiles)
-                    {
-                        Log("Reading entitlement: " + Path.GetFileName(entFile));
+                    foreach (string entFile in Directory.GetFiles(Config.MinecraftFolder, "*.ent", SearchOption.TopDirectoryOnly))
                         McCrypt.Keys.ReadEntitlementFile(entFile);
-                    }
                 }
 
                 LoadEntries();
             }
-            catch (Exception ex)
-            {
-                Log("Init failed: " + ex.Message);
-            }
+            catch (Exception ex) { Log("Init failed: " + ex.Message); }
         }
 
         private void LoadEntries()
@@ -391,8 +345,7 @@ namespace McDecryptor
                 listPacks.Items.Clear();
                 iconIndexByPath.Clear();
                 iconIndexLargeByPath.Clear();
-                PReader reader = new PReader();
-                currentEntries = reader.PEntryList;
+                currentEntries = new PReader().PEntryList;
                 listPacks.EndUpdate();
                 Log("Loaded " + currentEntries.Length + " entries.");
                 RebuildItems();
@@ -407,7 +360,7 @@ namespace McDecryptor
         private void DecryptAll() => DecryptEntries(currentEntries);
         private void DecryptSelected()
         {
-            List<PEntry> sel = new List<PEntry>();
+            var sel = new List<PEntry>();
             foreach (ListViewItem li in listPacks.SelectedItems)
                 if (li.Tag is PEntry pe) sel.Add(pe);
             DecryptEntries(sel.ToArray());
@@ -420,7 +373,7 @@ namespace McDecryptor
             Config.CrackPacks = chkCrack.Checked;
 
             Log("Starting decryption of " + entries.Length + " item(s)...");
-            BackgroundWorker bw = new BackgroundWorker { WorkerReportsProgress = true };
+            var bw = new BackgroundWorker { WorkerReportsProgress = true };
             bw.DoWork += (s, e) =>
             {
                 int idx = 0;
@@ -428,39 +381,20 @@ namespace McDecryptor
                 {
                     Log("Starting: " + cEntry.Name);
                     idx++;
-                    // Scale progress to max 70% before completion
-                    double raw = (double)idx / entries.Length; // 0..1
-                    int scaled = (int)Math.Min(70.0, raw * 70.0); // cap at 70
+                    int scaled = (int)Math.Min(70.0, (double)idx / entries.Length * 70.0);
                     bw.ReportProgress(scaled, cEntry.Name);
-                    try
-                    {
-                        DecryptSingle(cEntry);
-                        Log("Decrypted: " + cEntry.Name);
-                    }
-                    catch (Exception ex)
-                    {
-                        Log("Failed: " + cEntry.Name + " - " + ex.Message);
-                    }
+                    try { DecryptSingle(cEntry); Log("Decrypted: " + cEntry.Name); }
+                    catch (Exception ex) { Log("Failed: " + cEntry.Name + " - " + ex.Message); }
                 }
             };
-            bw.ProgressChanged += (s, e) =>
-            {
-                // Do not allow worker to set 100% prematurely
-                progress.Value = Math.Min(70, Math.Max(0, e.ProgressPercentage));
-            };
-            bw.RunWorkerCompleted += (s, e) =>
-            {
-                // Jump to 100% only when fully finished
-                progress.Value = 100;
-                Log("Finished.");
-            };
+            bw.ProgressChanged += (s, e) => progress.Value = Math.Min(70, Math.Max(0, e.ProgressPercentage));
+            bw.RunWorkerCompleted += (s, e) => { progress.Value = 100; Log("Finished."); };
             bw.RunWorkerAsync();
         }
 
-        private static string EscapeFilename(string filename)
-        {
-            return filename.Replace("/", "_").Replace("\\", "_").Replace(":", "_").Replace("?", "_").Replace("*", "_").Replace("<", "_").Replace(">", "_").Replace("|", "_").Replace("\"", "_");
-        }
+        private static string EscapeFilename(string filename) => filename
+            .Replace("/", "_").Replace("\\", "_").Replace(":", "_").Replace("?", "_")
+            .Replace("*", "_").Replace("<", "_").Replace(">", "_").Replace("|", "_").Replace("\"", "_");
 
         private void DecryptSingle(PEntry cEntry)
         {
@@ -468,9 +402,9 @@ namespace McDecryptor
             string outFolder = Path.Combine(outRoot, cEntry.ProductType, EscapeFilename(cEntry.Name));
             int counter = 1;
             string ogOutFolder = outFolder;
-            while (Directory.Exists(outFolder)) { outFolder = ogOutFolder + "_" + counter.ToString(); counter++; }
+            while (Directory.Exists(outFolder)) { outFolder = ogOutFolder + "_" + counter; counter++; }
             Directory.CreateDirectory(outFolder);
-            PReader pReader = new PReader();
+            var pReader = new PReader();
             try
             {
                 if (cEntry.ProductType == "addon")
@@ -506,7 +440,7 @@ namespace McDecryptor
 
                 if (Config.ZipPacks)
                 {
-                    string ext = "";
+                    string ext;
                     if (cEntry.ProductType == "world_templates") ext = ".mctemplate";
                     else if (cEntry.ProductType == "minecraftWorlds") ext = ".mcworld";
                     else if (cEntry.ProductType == "addon") ext = ".mcaddon";
@@ -518,19 +452,29 @@ namespace McDecryptor
                     Directory.Delete(outFolder, true);
                 }
             }
-            catch { Directory.Delete(outFolder, true); throw; }
+            catch
+            {
+                Directory.Delete(outFolder, true);
+                throw;
+            }
         }
 
         private static void CopyFile(string src, string dst)
         {
-            using (FileStream fs = File.OpenRead(src))
-            using (FileStream wfd = File.OpenWrite(dst))
-            { fs.CopyTo(wfd); }
+            using (var fs = File.OpenRead(src))
+            {
+                using (var wfd = File.OpenWrite(dst))
+                {
+                    fs.CopyTo(wfd);
+                }
+            }
         }
         private static void CopyDirectory(string sourcePath, string targetPath)
         {
-            foreach (string dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories)) Directory.CreateDirectory(dirPath.Replace(sourcePath, targetPath));
-            foreach (string newPath in Directory.GetFiles(sourcePath, "*", SearchOption.AllDirectories)) CopyFile(newPath, newPath.Replace(sourcePath, targetPath));
+            foreach (string dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
+                Directory.CreateDirectory(dirPath.Replace(sourcePath, targetPath));
+            foreach (string newPath in Directory.GetFiles(sourcePath, "*", SearchOption.AllDirectories))
+                CopyFile(newPath, newPath.Replace(sourcePath, targetPath));
         }
         private static void DecryptPack(string filePath, PEntry entry)
         {
@@ -565,15 +509,11 @@ namespace McDecryptor
             try
             {
                 string root = Config.OutFolder;
-                if (string.IsNullOrWhiteSpace(root))
-                    root = Path.Combine(Config.ApplicationFolder, "output");
+                if (string.IsNullOrWhiteSpace(root)) root = Path.Combine(Config.ApplicationFolder, "output");
                 Directory.CreateDirectory(root);
                 Process.Start(root);
             }
-            catch (Exception ex)
-            {
-                Log("Failed to open output folder: " + ex.Message);
-            }
+            catch (Exception ex) { Log("Failed to open output folder: " + ex.Message); }
         }
 
         private string FormatSize(long bytes)
@@ -593,12 +533,8 @@ namespace McDecryptor
             long total = 0;
             try
             {
-                // Sum files
-                string[] files = Directory.GetFiles(path, "*", SearchOption.AllDirectories);
-                foreach (var f in files)
-                {
+                foreach (var f in Directory.GetFiles(path, "*", SearchOption.AllDirectories))
                     try { total += new FileInfo(f).Length; } catch { }
-                }
             }
             catch { }
             return total;
